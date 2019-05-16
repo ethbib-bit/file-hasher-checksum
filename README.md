@@ -2,4 +2,3 @@
 
 Nimmt alle .md5 Dateien von einem bestimmten Verzeichnis und prüft, …..
 
-Wird noch ergänzt.
