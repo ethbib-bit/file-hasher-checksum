@@ -51,71 +51,77 @@ foreach $filename (@fileliste) {
   open(my $data, '<', $filename) or die "Could not open '$filename' $!\n";
   while (my $line = <$data>) {
 
-  #clean up each line and split into array
-  chomp $line;
-  my @fields = split " " , $line;
+    #clean up each line and split into array
+    chomp $line;
+    my @fields = split " " , $line;
 
-  #has 2 sections, must be a valid md5 and file combination
-  if (@fields == 2) {
-  my $md5sum = uc $fields[0]; #md5 sum
-  my $file = $fields[1]; #file for that md5 sum
+    #has 2 sections, must be a valid md5 and file combination
+    if (@fields == 2) {
+      my $md5sum = uc $fields[0]; #md5 sum
+      my $file = $fields[1]; #file for that md5 sum
 
-  #check md5 sum structure, should have better checking
-  if ($md5sum =~ /^[0-9A-Z]+$/) {
-    #checks if file actually exists
-    if (-e $file) {
-    # remove md5 file from files found in directory
-    my $numalldirfiles = @alldirfiles;
-    for ( my $inx = 0; $inx < $numalldirfiles; $inx++ ) {
-      if ($file eq $alldirfiles[$inx]) {
-       splice(@alldirfiles,$inx,1);
-       last;
+      #check md5 sum structure, should have better checking
+      if ($md5sum =~ /^[0-9A-Z]+$/) {
+        #checks if file actually exists
+        if (-e $file) {
+          # remove md5 file from files found in directory
+          my $numalldirfiles = @alldirfiles;
+          for ( my $inx = 0; $inx < $numalldirfiles; $inx++ ) {
+            if ($file eq $alldirfiles[$inx]) {
+              splice(@alldirfiles,$inx,1);
+              last;
+            }
+          }
+
+          #temp vars for actual md5sum check on file system
+          my (@linesArray, $line);
+          #build command
+          my $cmd='md5sum '.$file;
+
+          #run command and get output
+          open(CMD, "$cmd |");
+          @linesArray = <CMD>;
+          close(CMD);
+
+          #extract md5sum from output
+          my @separate = split " " , $linesArray[0];
+          my $md5sum_calc = uc $separate[0];
+
+          #compare md5sum on file system with value in .md5 file
+          if ($md5sum_calc eq $md5sum) {
+            print LOGDATEI "md5sum of file $file is correct!\n";
+          }
+          else {
+            print LOGDATEI "calculated md5sum of file $file is not correct! given md5sum is $md5sum, the file calculated md5sum is $md5sum_calc\n";
+          }
+        }
+        #if the file in the .md5 file does not exist on the file system
+        else {
+          print LOGDATEI "specified file ".$file." with specified md5sum ".$md5sum." do not exist on filesystem\n";
+        }
+      }
+      #output if found md5 is not a valid md5sum
+      else {
+        print LOGDATEI $md5sum." is not a md5 checksum, specified filename in the ".$filename." is ".$file."\n";
       }
     }
-
-    #temp vars for actual md5sum check on file system
-    my (@linesArray, $line);
-    #build command
-    my $cmd='md5sum '.$file;
-
-    #run command and get output
-    open(CMD, "$cmd |");
-    @linesArray = <CMD>;
-    close(CMD);
-
-    #extract md5sum from output
-    my @separate = split " " , $linesArray[0];
-    my $md5sum_calc = uc $separate[0];
-
-    #compare md5sum on file system with value in .md5 file
-    if ($md5sum_calc eq $md5sum) {
-      print LOGDATEI "md5sum of file $file is correct!\n";
-    }
-    else {
-     print LOGDATEI "calculated md5sum of file $file is not correct! given md5sum is $md5sum, the file calculated md5sum is $md5sum_calc\n";
-    }
-   }
-   #if the file in the .md5 file does not exist on the file system
-   else {
-     print LOGDATEI "specified file ".$file." with specified md5sum ".$md5sum." do not exist on filesystem\n";
-   }
-
-   
-  } else {
-   print LOGDATEI $md5sum." is not a md5 checksum, specified filename in the ".$filename." is ".$file."\n";
   }
- }
-}
-my $item = "";
-my $md5filename=substr($filename,rindex($filename,'/')+1);
-print "path=".$mp5_path." ".$md5filename." ".$md5log_file."\n";
-foreach $item (@alldirfiles) {
-  if ($item ne $md5filename) {
-     print LOGDATEI $item." file in directory but not in ".$filename." file!\n";
-  }
-}
 
-print LOGDATEI "\n\nEND of ".$filename." file\n\n\n";
+  #temp variables for final log file output for the current .md5 file
+  my $item = "";
+  my $md5filename=substr($filename,rindex($filename,'/')+1);
+
+  print "path=".$mp5_path." ".$md5filename." ".$md5log_file."\n";
+
+  #final check if item is in directory but no md5 sum is supplied in .md5 file
+  foreach $item (@alldirfiles) {
+    if ($item ne $md5filename) {
+      print LOGDATEI $item." file in directory but not in ".$filename." file!\n";
+    }
+  }
+
+  print LOGDATEI "\n\nEND of ".$filename." file\n\n\n";
+
 }
 
 close (LOGDATEI);
