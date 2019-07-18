@@ -1,4 +1,4 @@
-# File Hasher Checksum Checker
+# File Hasher Validator
 
 Compares files in a directory with the md5 data supplied in an md5 file originally generated with the Windows tool [MD5 File Hasher](http://www.digital-tronic.com/md5-file-hasher/). Used to check whether or not files have been modified compared with md5 sums in md5-file.
 
